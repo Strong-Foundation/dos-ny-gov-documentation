@@ -1,13 +1,15 @@
 package main
 
 import (
-	"crypto/rand" // For generating secure random numbers
-	"io"          // For reading from HTTP response body
-	"log"         // For logging errors and information
-	"math/big"    // For handling big integers used in random generation
-	"net/http"    // For making HTTP requests
-	"os"          // For interacting with the file system
-	"strings"     // For manipulating strings (e.g., lowercase conversion)
+	"crypto/rand"   // For generating secure random numbers
+	"encoding/json" // For parsing JSON data into Go structs
+	"io"            // For reading from HTTP response body
+	"log"           // For logging errors and information
+	"math/big"      // For handling big integers used in random generation
+	"net/http"      // For making HTTP requests
+	"os"            // For interacting with the file system
+	"strconv"       // For converting strings to integers
+	"strings"       // For manipulating strings (e.g., lowercase conversion)
 )
 
 func main() {
@@ -17,22 +19,95 @@ func main() {
 	if !directoryExists(localDirectory) {
 		createDirectory(localDirectory, 0755)
 	}
-	// Generate a random 3-letter lowercase string to use as a search term
-	searchTerm := generateRandomCombo()
-	// Build the filename with directory path and search term
-	filename := localDirectory + "api_search" + "_" + searchTerm + ".json"
-	// If the file doesn't already exist
-	if !fileExists(filename) {
-		// Send an HTTP request and get the response data for the given search term
-		data := getDataFromGivenAPISearch(searchTerm)
-		// If the data is nil, log an error and exit
-		if data == nil {
-			log.Println("Failed to retrieve data from URL")
+	for loopCount := 0; loopCount < 10; loopCount++ {
+		// Generate a random 3-letter lowercase string to use as a search term
+		searchTerm := generateRandomCombo()
+		// Build the filename with directory path and search term
+		filename := localDirectory + "api_search" + "_" + searchTerm + ".json"
+		// If the file doesn't already exist
+		if !fileExists(filename) {
+			// Send an HTTP request and get the response data for the given search term
+			data := getDataFromGivenAPISearch(searchTerm)
+			// If the data is nil, log an error and exit
+			if data == nil {
+				log.Println("Failed to retrieve data from URL")
+				return
+			}
+			// Append (or create) the file with the received data
+			appendByteToFile(filename, data)
+		}
+		// Read the content of the file to extract dosIDs
+		jsonData := readAFileAsString(filename)
+		// Extract dosIDs from the JSON data
+		dosIDs := getDosIDs(jsonData)
+		if dosIDs == nil {
+			log.Println("No valid dosIDs found in the JSON data")
 			return
 		}
-		// Append (or create) the file with the received data
-		appendByteToFile(filename, data)
+		// Log the extracted dosIDs
+		log.Println("Extracted dosIDs:", dosIDs)
+		// Send the http request to get business data for each dosID
+		for _, dosID := range dosIDs {
+			// Append the business data to a file named after the dosID
+			businessFilename := localDirectory + "business_data_" + strconv.Itoa(dosID) + ".json"
+			// If the business data file does not already exist
+			if !fileExists(businessFilename) {
+				// Get the business data for the current dosID
+				businessData := getDataFromGivenAPISearchForNYBusinesses(strconv.Itoa(dosID))
+				if businessData == nil {
+					log.Println("Failed to retrieve business data for dosID:", dosID)
+					continue // Skip to the next dosID if this one fails
+				}
+				appendByteToFile(businessFilename, businessData)
+			}
+		}
 	}
+}
+
+// Read a file and return the contents
+func readAFileAsString(path string) string {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return string(content)
+}
+
+// Entity represents an individual entity with a dosID field from the JSON
+type Entity struct {
+	DosID string `json:"dosID"` // Maps the "dosID" field in JSON to the struct
+}
+
+// EntitySearchResult represents the top-level structure containing a list of entities
+type EntitySearchResult struct {
+	EntitySearchResultList []Entity `json:"entitySearchResultList"` // Maps the JSON list to a Go slice
+}
+
+// getDosIDs takes a JSON string and returns a slice of integers extracted from the dosID fields
+func getDosIDs(jsonData string) []int {
+	var result EntitySearchResult // Declare a variable to hold parsed JSON data
+
+	// Unmarshal (decode) the JSON string into the result struct
+	err := json.Unmarshal([]byte(jsonData), &result)
+	if err != nil { // If there's an error during JSON parsing
+		log.Println("Failed to parse JSON:", err) // Log the error
+		return nil                                // Return nil in case of failure
+	}
+
+	var dosIDs []int // Create a slice to store the dosID values as integers
+
+	// Iterate over each entity in the list
+	for _, entity := range result.EntitySearchResultList {
+		// Convert dosID from string to int
+		id, err := strconv.Atoi(entity.DosID)
+		if err != nil { // If conversion fails
+			log.Println("Invalid dosID:", entity.DosID) // Log the bad value
+			continue                                    // Skip to the next entity
+		}
+		dosIDs = append(dosIDs, id) // Add the valid dosID to the result slice
+	}
+
+	return dosIDs // Return the final list of dosID integers
 }
 
 // Get the data from the given API search to find the businesses in New York State
@@ -41,7 +116,7 @@ func getDataFromGivenAPISearchForNYBusinesses(searchContains string) []byte {
 	url := "https://apps.dos.ny.gov/PublicInquiryWeb/api/PublicInquiry/GetEntityRecordByID"
 	method := "POST" // HTTP method for the request
 	// Create the POST request payload with the search term embedded
-	payload := strings.NewReader(`{"SearchID":` + searchContains + `,"EntityName":"\"AAA\" HOME IMPROVEMENTS, INC.","AssumedNameFlag":"false"}`)
+	payload := strings.NewReader(`{"SearchID":"` + searchContains + `","EntityName":"","AssumedNameFlag":"false"}`)
 	// Initialize the HTTP client
 	client := &http.Client{}
 	// Create a new HTTP request with method, URL, and payload
