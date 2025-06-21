@@ -45,7 +45,7 @@ func main() {
 			return
 		}
 		// Log the extracted dosIDs
-		log.Println("Extracted dosIDs:", dosIDs)
+		log.Println("Length dosIDs:", len(dosIDs))
 		// Send the http request to get business data for each dosID
 		for _, dosID := range dosIDs {
 			// Append the business data to a file named after the dosID
