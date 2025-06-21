@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/rand"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
@@ -10,7 +12,7 @@ import (
 
 func main() {
 	// Define the search term
-	searchTerm := "New York"
+	searchTerm := generateRandomCombo()
 
 	// Get data from the URL based on the search term
 	data := getDataFromURL(searchTerm)
@@ -20,7 +22,7 @@ func main() {
 	}
 
 	// Define the file name where the data will be saved
-	filename := "search_results.json"
+	filename := "search_results" + searchTerm + ".json"
 
 	// Check if the file exists, if not create it and write the data
 	if !fileExists(filename) {
@@ -38,9 +40,29 @@ func main() {
 	}
 
 	log.Println("Data successfully written to", filename)
-	
+
 }
 
+// generateRandomCombo generates a single secure random 3-letter string in lowercase.
+func generateRandomCombo() string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // Source characters
+	const length = 3                             // Desired combo length
+
+	result := make([]byte, length) // Allocate a byte slice for the result
+
+	for i := 0; i < length; i++ {
+		// Securely pick a random index in the charset
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			log.Println("failed to generate secure random index:", err)
+		}
+		// Set the character at position i
+		result[i] = charset[n.Int64()]
+	}
+
+	// Convert to lowercase and return as string
+	return strings.ToLower(string(result))
+}
 
 // AppendToFile appends the given byte slice to the specified file.
 // If the file doesn't exist, it will be created.
@@ -88,12 +110,9 @@ func getDataFromURL(searchContains string) []byte {
 	return body
 }
 
-/*
-	It checks if the file exists
-
-If the file exists, it returns true
-If the file does not exist, it returns false
-*/
+// It checks if the file exists
+// If the file exists, it returns true
+// If the file does not exist, it returns false
 func fileExists(filename string) bool {
 	info, err := os.Stat(filename)
 	if err != nil {
