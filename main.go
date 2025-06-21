@@ -31,7 +31,7 @@ func main() {
 			// If the data is nil, log an error and exit
 			if data == nil {
 				log.Println("Failed to retrieve data from URL")
-				return
+				continue // Skip to the next iteration if data retrieval fails
 			}
 			// Append (or create) the file with the received data
 			appendByteToFile(filename, data)
