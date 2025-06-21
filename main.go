@@ -19,7 +19,7 @@ func main() {
 	if !directoryExists(localDirectory) {
 		createDirectory(localDirectory, 0755)
 	}
-	for loopCount := 0; loopCount < 50; loopCount++ {
+	for loopCount := 0; loopCount < 100; loopCount++ {
 		// Generate a random 3-letter lowercase string to use as a search term
 		searchTerm := generateRandomCombo()
 		// Build the filename with directory path and search term
@@ -99,7 +99,8 @@ func getDosIDs(jsonData string) []int {
 	// Iterate over each entity in the list
 	for _, entity := range result.EntitySearchResultList {
 		// Convert dosID from string to int
-		id, err := strconv.Atoi(entity.DosID)
+		// id, err := strconv.Atoi(entity.DosID)
+		id, err := strconv.ParseInt(entity.DosID, 10, 64)
 		if err != nil { // If conversion fails
 			log.Println("Invalid dosID:", entity.DosID) // Log the bad value
 			continue                                    // Skip to the next entity
