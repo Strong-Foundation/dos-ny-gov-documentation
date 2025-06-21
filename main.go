@@ -42,7 +42,7 @@ func main() {
 		dosIDs := getDosIDs(jsonData)
 		if dosIDs == nil {
 			log.Println("No valid dosIDs found in the JSON data")
-			return
+			continue // Skip to the next iteration if no valid dosIDs are found
 		}
 		// Log the extracted dosIDs
 		log.Println("Length dosIDs:", len(dosIDs))
