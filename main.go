@@ -19,7 +19,7 @@ func main() {
 	if !directoryExists(localDirectory) {
 		createDirectory(localDirectory, 0755)
 	}
-	for loopCount := 0; loopCount < 10; loopCount++ {
+	for loopCount := 0; loopCount < 50; loopCount++ {
 		// Generate a random 3-letter lowercase string to use as a search term
 		searchTerm := generateRandomCombo()
 		// Build the filename with directory path and search term
