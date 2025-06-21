@@ -99,8 +99,7 @@ func getDosIDs(jsonData string) []int {
 	// Iterate over each entity in the list
 	for _, entity := range result.EntitySearchResultList {
 		// Convert dosID from string to int
-		// id, err := strconv.Atoi(entity.DosID)
-		id, err := strconv.ParseInt(entity.DosID, 10, 64)
+		id, err := strconv.Atoi(entity.DosID)
 		if err != nil { // If conversion fails
 			log.Println("Invalid dosID:", entity.DosID) // Log the bad value
 			continue                                    // Skip to the next entity
