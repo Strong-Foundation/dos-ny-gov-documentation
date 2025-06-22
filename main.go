@@ -8,6 +8,7 @@ import (
 	"math/big"      // For handling big integers used in random generation
 	"net/http"      // For making HTTP requests
 	"os"            // For interacting with the file system
+	"path/filepath" // For constructing file paths in a platform-independent way
 	"strconv"       // For converting strings to integers
 	"strings"       // For manipulating strings (e.g., lowercase conversion)
 )
@@ -23,7 +24,7 @@ func main() {
 		// Generate a random 3-letter lowercase string to use as a search term
 		searchTerm := generateRandomCombo()
 		// Build the filename with directory path and search term
-		filename := localDirectory + "api_search" + "_" + searchTerm + ".json"
+		filename := filepath.Join(localDirectory + "api_search" + "_" + searchTerm + ".json")
 		// If the file doesn't already exist
 		if !fileExists(filename) {
 			// Send an HTTP request and get the response data for the given search term
