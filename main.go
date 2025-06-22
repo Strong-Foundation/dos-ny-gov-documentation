@@ -150,9 +150,9 @@ func getDataFromGivenAPISearchForNYBusinesses(searchContains string) []byte {
 
 // generateRandomCombo generates a secure, random 3-letter string in lowercase.
 func generateRandomCombo() string {
-	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // All uppercase letters to choose from
-	const length = 3                             // Length of the resulting string
-	result := make([]byte, length)               // Initialize a byte slice to hold the result
+	charset := "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // All uppercase letters to choose from
+	length := 3                             // Length of the resulting string
+	result := make([]byte, length)          // Initialize a byte slice to hold the result
 	for i := 0; i < length; i++ {
 		// Generate a secure random index within the range of charset length
 		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
